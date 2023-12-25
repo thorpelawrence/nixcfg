@@ -4,6 +4,13 @@
     ./networking.nix # generated at runtime by nixos-infect
   ];
 
+  nix.optimise.automatic = true;
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   age.secrets."gluetun_mullvad.env.age".file = ../secrets/gluetun_mullvad.env.age;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
