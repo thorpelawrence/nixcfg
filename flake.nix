@@ -5,19 +5,19 @@
       url = "github:nix-community/home-manager/release-23.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agenix = {
-      url = "github:ryantm/agenix";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     deploy-rs.url = "github:serokell/deploy-rs";
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, deploy-rs }: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, deploy-rs }: {
     nixosConfigurations.flaky = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
         ./flaky/configuration.nix
-        agenix.nixosModules.default
+        sops-nix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;

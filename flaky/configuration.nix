@@ -11,9 +11,12 @@
     options = "--delete-older-than 30d";
   };
 
-  age.secrets."gluetun_mullvad.env.age".file = ../secrets/gluetun_mullvad.env.age;
-
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  sops.secrets."gluetun-mullvad.env" = {
+    sopsFile = ../secrets/gluetun-mullvad.env;
+    format = "dotenv";
+  };
 
   system.stateVersion = "23.11";
   boot.tmp.cleanOnBoot = true;
@@ -49,7 +52,7 @@
             SERVER_CITIES = "${city}";
             DOT_PROVIDERS = "quad9";
           };
-          environmentFiles = [ config.age.secrets."gluetun_mullvad.env.age".path ];
+          environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
           extraOptions = [
             "--cap-add=NET_ADMIN"
             "--device=/dev/net/tun"
