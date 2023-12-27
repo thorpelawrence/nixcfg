@@ -57,7 +57,6 @@
             OPENVPN_IPV6 = "on";
             SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
             SERVER_CITIES = lib.strings.concatStringsSep "," cities;
-            DOT_PROVIDERS = "quad9";
           };
           environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
           extraOptions = [
