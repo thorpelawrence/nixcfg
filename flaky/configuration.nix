@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: rec {
+{ config, lib, pkgs, ... }: rec {
   imports = [
     ./hardware-configuration.nix
     ./networking.nix # generated at runtime by nixos-infect
@@ -43,14 +43,20 @@
   };
   virtualisation = {
     oci-containers = let
-      tailscale_exit_node_mullvad = { city, shortname ? city }: {
+      tailscale_exit_node_mullvad = {
+        type ? "openvpn",
+        countries,
+        cities ? [ ],
+        shortname ? lib.strings.toLower builtins.head countries
+      }: {
         "gluetun-${shortname}" = {
           image = "qmcgaw/gluetun:latest";
           environment = {
             VPN_SERVICE_PROVIDER = "mullvad";
-            VPN_TYPE = "openvpn";
+            VPN_TYPE = type;
             OPENVPN_IPV6 = "on";
-            SERVER_CITIES = "${city}";
+            SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
+            SERVER_CITIES = lib.strings.concatStringsSep "," cities;
             DOT_PROVIDERS = "quad9";
           };
           environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
@@ -78,8 +84,9 @@
       };
     in {
       containers = {}
-        // tailscale_exit_node_mullvad { city = "london"; shortname = "lon"; }
-        // tailscale_exit_node_mullvad { city = "oslo"; };
+        // tailscale_exit_node_mullvad { countries = [ "UK" ]; cities = [ "London" ]; shortname = "lon"; }
+        // tailscale_exit_node_mullvad { countries = [ "Finland" ]; shortname = "fin"; }
+        // tailscale_exit_node_mullvad { countries = [ "Norway" ]; type = "wireguard"; shortname = "nor"; };
     };
     podman = {
       enable = true;
