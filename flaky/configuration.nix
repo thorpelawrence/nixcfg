@@ -13,6 +13,8 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  sops.defaultSopsFile = ../secrets/common.yaml;
+  sops.secrets."passwords/lawrence".neededForUsers = true;
   sops.secrets."gluetun-mullvad.env" = {
     sopsFile = ../secrets/gluetun-mullvad.env;
     format = "dotenv";
@@ -87,8 +89,10 @@
   };
   environment.systemPackages = [ ];
   programs.fish.enable = true;
+  users.mutableUsers = false;
   users.users.lawrence = {
     isNormalUser = true;
+    hashedPasswordFile = config.sops.secrets."passwords/lawrence".path;
     extraGroups = [ "wheel" ];
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [ ];
