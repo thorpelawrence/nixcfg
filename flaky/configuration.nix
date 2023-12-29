@@ -15,8 +15,13 @@
 
   sops.defaultSopsFile = ../secrets/common.yaml;
   sops.secrets."passwords/lawrence".neededForUsers = true;
+  sops.secrets."tailscale-auth-key" = {};
   sops.secrets."gluetun-mullvad.env" = {
     sopsFile = ../secrets/gluetun-mullvad.env;
+    format = "dotenv";
+  };
+  sops.secrets."tailscale-gluetun-mullvad.env" = {
+    sopsFile = ../secrets/tailscale-gluetun-mullvad.env;
     format = "dotenv";
   };
 
@@ -39,7 +44,7 @@
     enable = true;
     useRoutingFeatures = "server";
     extraUpFlags = [ "--ssh" "--advertise-exit-node" ];
-    #authKeyFile = "/tmp/tailscale.key";
+    authKeyFile = config.sops.secrets.tailscale-auth-key.path;
   };
   virtualisation = {
     oci-containers = let
@@ -68,17 +73,18 @@
             "--device=/dev/net/tun"
           ];
         };
-        "tailscale-mullvad-${shortname}" = {
+        "tailscale-gluetun-mullvad-${shortname}" = {
           dependsOn = [ "gluetun-${shortname}" ];
           image = "tailscale/tailscale:latest";
-          hostname = "flaky-mullvad-${shortname}";
+          hostname = "gluetun-mullvad-${shortname}";
           environment = {
             TS_AUTH_ONCE = "true";
             TS_STATE_DIR= "/var/lib/tailscale";
-            TS_EXTRA_ARGS = "--advertise-exit-node";
+            TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun-mullvad";
           };
+          environmentFiles = [ config.sops.secrets."tailscale-gluetun-mullvad.env".path ];
           volumes = [
-            "tailscale-mullvad-${shortname}:/var/lib/tailscale"
+            "tailscale-gluetun-mullvad-${shortname}:/var/lib/tailscale"
           ];
           extraOptions = [
             "--network=container:gluetun-${shortname}"
