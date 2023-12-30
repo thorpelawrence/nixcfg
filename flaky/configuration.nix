@@ -64,8 +64,9 @@
             SERVER_CITIES = lib.strings.concatStringsSep "," cities;
             DOT_PROVIDERS = "quad9";
             DOT_IPV6 = "on";
+            BLOCK_ADS = "off";
             BLOCK_MALICIOUS = "off";
-            BLOCK_ADS = "on";
+            BLOCK_SURVEILLANCE = "off";
           };
           environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
           extraOptions = [
