@@ -94,7 +94,7 @@
       };
     in {
       containers = {}
-        // tailscale_exit_node_mullvad { countries = [ "UK" ]; cities = [ "London" ]; shortname = "lon"; }
+        // tailscale_exit_node_mullvad { countries = [ "UK" ]; cities = [ "London" ]; type = "wireguard"; shortname = "lon"; }
         // tailscale_exit_node_mullvad { countries = [ "Finland" ]; shortname = "fin"; }
         // tailscale_exit_node_mullvad { countries = [ "Norway" ]; type = "wireguard"; shortname = "nor"; };
     };
