@@ -70,6 +70,7 @@
                 BLOCK_ADS = "off";
                 BLOCK_MALICIOUS = "off";
                 BLOCK_SURVEILLANCE = "off";
+                UPDATER_PERIOD = "24h";
               };
               environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
               extraOptions = [
