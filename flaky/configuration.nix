@@ -15,7 +15,7 @@
 
   sops.defaultSopsFile = ../secrets/common.yaml;
   sops.secrets."passwords/lawrence".neededForUsers = true;
-  sops.secrets."tailscale-auth-key" = {};
+  sops.secrets."tailscale-auth-key" = { };
   sops.secrets."gluetun-mullvad.env" = {
     sopsFile = ../secrets/gluetun-mullvad.env;
     format = "dotenv";
@@ -47,57 +47,74 @@
     authKeyFile = config.sops.secrets.tailscale-auth-key.path;
   };
   virtualisation = {
-    oci-containers = let
-      tailscale_exit_node_mullvad = {
-        type ? "openvpn",
-        countries,
-        cities ? [ ],
-        shortname ? lib.strings.toLower builtins.head countries
-      }: {
-        "gluetun-${shortname}" = {
-          image = "qmcgaw/gluetun:latest";
-          environment = {
-            VPN_SERVICE_PROVIDER = "mullvad";
-            VPN_TYPE = type;
-            OPENVPN_IPV6 = "on";
-            SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
-            SERVER_CITIES = lib.strings.concatStringsSep "," cities;
-            DOT_PROVIDERS = "quad9";
-            DOT_IPV6 = "on";
-            BLOCK_ADS = "off";
-            BLOCK_MALICIOUS = "off";
-            BLOCK_SURVEILLANCE = "off";
+    oci-containers =
+      let
+        tailscale_exit_node_mullvad =
+          { type ? "openvpn"
+          , countries
+          , cities ? [ ]
+          , hostnames ? [ ]
+          , shortname ? lib.strings.toLower builtins.head countries
+          }: {
+            "gluetun-${shortname}" = {
+              image = "qmcgaw/gluetun:latest";
+              environment = {
+                VPN_SERVICE_PROVIDER = "mullvad";
+                VPN_TYPE = type;
+                OPENVPN_IPV6 = "on";
+                SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
+                SERVER_CITIES = lib.strings.concatStringsSep "," cities;
+                SERVER_HOSTNAMES = lib.strings.concatStringsSep "," hostnames;
+                DOT_PROVIDERS = "quad9";
+                DOT_IPV6 = "on";
+                BLOCK_ADS = "off";
+                BLOCK_MALICIOUS = "off";
+                BLOCK_SURVEILLANCE = "off";
+              };
+              environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
+              extraOptions = [
+                "--cap-add=NET_ADMIN"
+                "--device=/dev/net/tun"
+              ];
+            };
+            "tailscale-gluetun-mullvad-${shortname}" = {
+              dependsOn = [ "gluetun-${shortname}" ];
+              image = "tailscale/tailscale:latest";
+              hostname = "gluetun-mullvad-${shortname}";
+              environment = {
+                TS_AUTH_ONCE = "true";
+                TS_STATE_DIR = "/var/lib/tailscale";
+                TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun-mullvad";
+              };
+              environmentFiles = [ config.sops.secrets."tailscale-gluetun-mullvad.env".path ];
+              volumes = [
+                "tailscale-gluetun-mullvad-${shortname}:/var/lib/tailscale"
+              ];
+              extraOptions = [
+                "--network=container:gluetun-${shortname}"
+              ];
+            };
           };
-          environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
-          extraOptions = [
-            "--cap-add=NET_ADMIN"
-            "--device=/dev/net/tun"
-          ];
+      in
+      {
+        containers = { }
+          // tailscale_exit_node_mullvad {
+          countries = [ "UK" ];
+          cities = [ "London" ];
+          hostnames = [ "gb-lon-wg-202" ];
+          type = "wireguard";
+          shortname = "lon";
         };
-        "tailscale-gluetun-mullvad-${shortname}" = {
-          dependsOn = [ "gluetun-${shortname}" ];
-          image = "tailscale/tailscale:latest";
-          hostname = "gluetun-mullvad-${shortname}";
-          environment = {
-            TS_AUTH_ONCE = "true";
-            TS_STATE_DIR= "/var/lib/tailscale";
-            TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun-mullvad";
-          };
-          environmentFiles = [ config.sops.secrets."tailscale-gluetun-mullvad.env".path ];
-          volumes = [
-            "tailscale-gluetun-mullvad-${shortname}:/var/lib/tailscale"
-          ];
-          extraOptions = [
-            "--network=container:gluetun-${shortname}"
-          ];
-        };
+        # // tailscale_exit_node_mullvad {
+        #   countries = [ "Finland" ];
+        #   shortname = "fin";
+        # }
+        # // tailscale_exit_node_mullvad {
+        #   countries = [ "Norway" ];
+        #   type = "wireguard";
+        #   shortname = "nor";
+        # };
       };
-    in {
-      containers = {}
-        // tailscale_exit_node_mullvad { countries = [ "UK" ]; cities = [ "London" ]; type = "wireguard"; shortname = "lon"; };
-        # // tailscale_exit_node_mullvad { countries = [ "Finland" ]; shortname = "fin"; }
-        # // tailscale_exit_node_mullvad { countries = [ "Norway" ]; type = "wireguard"; shortname = "nor"; };
-    };
     podman = {
       enable = true;
       defaultNetwork.settings.dns_enabled = true;

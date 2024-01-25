@@ -13,6 +13,7 @@
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, deploy-rs }: {
+    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
     nixosConfigurations.flaky = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [

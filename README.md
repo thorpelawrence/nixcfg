@@ -1,6 +1,6 @@
 # nixcfg
 
 ```shell
-$ nix-shell -p ssh-to-age --run 'ssh-keyscan flaky | ssh-to-age'
-$ nix-shell -p deploy-rs --run "deploy --remote-build [--skip-checks]"
+$ nix shell nixpkgs#ssh-to-age --command sh -c 'ssh-keyscan flaky | ssh-to-age'
+$ nix run nixpkgs#deploy-rs -- --remote-build [--skip-checks]
 ```
