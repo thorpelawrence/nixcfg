@@ -53,6 +53,7 @@
           { type ? "openvpn"
           , countries
           , cities ? [ ]
+          , isps ? [ ]
           , hostnames ? [ ]
           , shortname ? lib.strings.toLower builtins.head countries
           }: {
@@ -65,6 +66,7 @@
                 SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
                 SERVER_CITIES = lib.strings.concatStringsSep "," cities;
                 SERVER_HOSTNAMES = lib.strings.concatStringsSep "," hostnames;
+                ISP = lib.strings.concatStringsSep "," isps;
                 DOT_PROVIDERS = "quad9";
                 DOT_IPV6 = "on";
                 BLOCK_ADS = "off";
@@ -106,7 +108,7 @@
           // tailscale_exit_node_mullvad {
           countries = [ "UK" ];
           cities = [ "London" ];
-          hostnames = [ "gb-lon-wg-202" ];
+          isps = [ "xtom" ];
           type = "wireguard";
           shortname = "lon";
         };
