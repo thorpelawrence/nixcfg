@@ -86,13 +86,17 @@
                 TS_AUTH_ONCE = "true";
                 TS_STATE_DIR = "/var/lib/tailscale";
                 TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun-mullvad";
+                TS_NO_LOGS_NO_SUPPORT = "true";
               };
               environmentFiles = [ config.sops.secrets."tailscale-gluetun-mullvad.env".path ];
               volumes = [
+                "/dev/net/tun:/dev/net/tun"
                 "tailscale-gluetun-mullvad-${shortname}:/var/lib/tailscale"
               ];
               extraOptions = [
                 "--network=container:gluetun-${shortname}"
+                "--cap-add=NET_ADMIN"
+                "--cap-add=NET_RAW"
               ];
             };
           };
