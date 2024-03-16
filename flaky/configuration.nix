@@ -2,6 +2,7 @@
   imports = [
     ./hardware-configuration.nix
     ./networking.nix # generated at runtime by nixos-infect
+    ./matrix.nix
   ];
 
   nix.optimise.automatic = true;
