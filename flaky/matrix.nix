@@ -46,6 +46,9 @@ in
       "${domain}" = {
         enableACME = true;
         forceSSL = true;
+        locations."/".extraConfig = ''
+          return 404;
+        '';
         # This section is not needed if the server_name of matrix-synapse is equal to
         # the domain (i.e. example.org from @foo:example.org) and the federation port
         # is 8448.
