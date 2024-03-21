@@ -17,13 +17,13 @@
     nixosConfigurations.flaky = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        ./flaky/configuration.nix
+        ./hosts/flaky/configuration.nix
         sops-nix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.lawrence = import ./flaky/home.nix;
+          home-manager.users.lawrence = import ./hosts/flaky/home.nix;
         }
       ];
     };

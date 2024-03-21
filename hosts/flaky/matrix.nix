@@ -30,11 +30,6 @@ in
   '';
 
   services.nginx = {
-    enable = true;
-    recommendedTlsSettings = true;
-    recommendedOptimisation = true;
-    recommendedGzipSettings = true;
-    recommendedProxySettings = true;
     virtualHosts = {
       # If the A and AAAA DNS records on example.org do not point on the same host as the
       # records for myhostname.example.org, you can easily move the /.well-known

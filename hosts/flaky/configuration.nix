@@ -2,6 +2,7 @@
   imports = [
     ./hardware-configuration.nix
     ./networking.nix # generated at runtime by nixos-infect
+    ./hosting.nix
     ./matrix.nix
   ];
 
@@ -14,15 +15,15 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  sops.defaultSopsFile = ../secrets/common.yaml;
+  sops.defaultSopsFile = ../../secrets/common.yaml;
   sops.secrets."passwords/lawrence".neededForUsers = true;
   sops.secrets."tailscale-auth-key" = { };
   sops.secrets."gluetun-mullvad.env" = {
-    sopsFile = ../secrets/gluetun-mullvad.env;
+    sopsFile = ../../secrets/gluetun-mullvad.env;
     format = "dotenv";
   };
   sops.secrets."tailscale-gluetun-mullvad.env" = {
-    sopsFile = ../secrets/tailscale-gluetun-mullvad.env;
+    sopsFile = ../../secrets/tailscale-gluetun-mullvad.env;
     format = "dotenv";
   };
 
