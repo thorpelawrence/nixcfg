@@ -1,10 +1,6 @@
 { pkgs, lib, config, ... }:
 {
-  services.nginx = {
+  services.caddy = {
     enable = true;
-    recommendedTlsSettings = true;
-    recommendedOptimisation = true;
-    recommendedGzipSettings = true;
-    recommendedProxySettings = true;
   };
 }
