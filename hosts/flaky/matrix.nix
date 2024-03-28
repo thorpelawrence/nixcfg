@@ -15,11 +15,6 @@ in
 {
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "admin+acme@${domain}";
-  };
-
   services.postgresql.enable = true;
   services.postgresql.initialScript = pkgs.writeText "synapse-init.sql" ''
     CREATE ROLE "matrix-synapse" WITH LOGIN PASSWORD 'synapse';
