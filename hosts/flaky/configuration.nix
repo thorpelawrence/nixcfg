@@ -1,10 +1,29 @@
-{ config, lib, pkgs, ... }: rec {
+{ config, lib, pkgs, inputs, ... }: rec {
   imports = [
     ./hardware-configuration.nix
     ./networking.nix # generated at runtime by nixos-infect
     ./hosting.nix
     ./matrix.nix
   ];
+
+  time.timeZone = "Europe/London";
+
+  system.autoUpgrade = {
+    enable = true;
+    flake = inputs.self.outPath;
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = "02:00";
+    randomizedDelaySec = "45min";
+  };
+
+  systemd.services."nixos-upgrade".postStop = ''
+    ${pkgs.curlMinimal}/bin/curl -fsS -m 10 --retry 5 -o /dev/null \
+      "$(cat ${config.sops.secrets."nixos-upgrade-webhook".path})/$EXIT_STATUS"
+  '';
 
   nix.optimise.automatic = true;
   nix.gc = {
@@ -17,6 +36,7 @@
 
   sops.defaultSopsFile = ../../secrets/common.yaml;
   sops.secrets."passwords/lawrence".neededForUsers = true;
+  sops.secrets."nixos-upgrade-webhook" = { };
   sops.secrets."tailscale-auth-key" = { };
   sops.secrets."gluetun-mullvad.env" = {
     sopsFile = ../../secrets/gluetun-mullvad.env;
