@@ -13,6 +13,10 @@ let
   '';
 in
 {
+  nixpkgs.config.permittedInsecurePackages = [
+    "olm-3.2.16"
+  ];
+
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
   services.postgresql.enable = true;
