@@ -7,10 +7,10 @@ in
     enable = true;
     virtualHosts = {
       "plik.${domain}".extraConfig = ''
-        reverse_proxy http://100.88.233.89:1612
+        reverse_proxy http://100.71.198.32:1612
       '';
       "pcopy.${domain}".extraConfig = ''
-        reverse_proxy http://100.88.233.89:2586
+        reverse_proxy http://100.71.198.32:2586
       '';
     };
   };
