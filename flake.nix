@@ -12,32 +12,44 @@
     deploy-rs.url = "github:serokell/deploy-rs";
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, deploy-rs }@inputs: {
-    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
-    nixosConfigurations.flaky = nixpkgs.lib.nixosSystem {
+  outputs = { self, nixpkgs, home-manager, sops-nix, deploy-rs }@inputs:
+    let
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [
-        ./hosts/flaky/configuration.nix
-        sops-nix.nixosModules.default
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.lawrence = import ./hosts/flaky/home.nix;
-        }
-      ];
-    };
-
-    deploy.nodes.flaky = {
-      hostname = "flaky";
-      profiles.system = {
-        sshUser = "root";
-        user = "root";
-        path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.flaky;
+      pkgs = import nixpkgs { inherit system; };
+      deployPkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          deploy-rs.overlay
+          (self: super: { deploy-rs = { inherit (pkgs) deploy-rs; lib = super.deploy-rs.lib; }; })
+        ];
       };
-    };
+    in
+    {
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
+      nixosConfigurations.flaky = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/flaky/configuration.nix
+          sops-nix.nixosModules.default
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lawrence = import ./hosts/flaky/home.nix;
+          }
+        ];
+      };
 
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-  };
+      deploy.nodes.flaky = {
+        hostname = "flaky";
+        profiles.system = {
+          sshUser = "root";
+          user = "root";
+          path = deployPkgs.deploy-rs.lib.activate.nixos self.nixosConfigurations.flaky;
+        };
+      };
+
+      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deployPkgs.deploy-rs.lib;
+    };
 }
