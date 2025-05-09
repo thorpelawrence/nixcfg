@@ -26,6 +26,9 @@ in
       TEMPLATE template0
       LC_COLLATE = "C"
       LC_CTYPE = "C";
+
+    CREATE ROLE "mautrix-telegram" WITH LOGIN PASSWORD 'telegram';
+    CREATE DATABASE "mautrix-telegram" WITH OWNER "mautrix-telegram";
   '';
 
   services.caddy = {
@@ -64,14 +67,29 @@ in
     '';
     owner = "matrix-synapse";
   };
+  sops.secrets."matrix-synapse/as_token" = { };
+  sops.secrets."matrix-synapse/hs_token" = { };
+  sops.secrets."matrix-synapse/sender_localpart" = { };
+  sops.templates."mautrix_double_puppet_appservice.conf" = {
+    content = ''
+      id: doublepuppet
+      # intentionally left blank
+      url:
+      as_token: ${config.sops.placeholder."matrix-synapse/as_token"}
+      hs_token: ${config.sops.placeholder."matrix-synapse/hs_token"}
+      sender_localpart: ${config.sops.placeholder."matrix-synapse/sender_localpart"}
+      rate_limited: false
+      namespaces:
+        users:
+        - regex: '@.*:${lib.strings.escapeRegex domain}'
+          exclusive: false
+    '';
+    owner = "matrix-synapse";
+  };
 
   services.matrix-synapse = {
     enable = true;
     settings.server_name = domain;
-    # The public base URL value must match the `base_url` value set in `clientConfig` above.
-    # The default value here is based on `server_name`, so if your `server_name` is different
-    # from the value of `fqdn` above, you will likely run into some mismatched domain names
-    # in client applications.
     settings.public_baseurl = baseUrl;
     settings.listeners = [
       {
@@ -88,6 +106,56 @@ in
     ];
     extraConfigFiles = [
       config.sops.templates."synapse_registration_shared_secret.conf".path
+      config.sops.templates."mautrix_double_puppet_appservice.conf".path
     ];
   };
+
+  sops.secrets."mautrix-telegram.env" = {
+    sopsFile = ../../secrets/mautrix-telegram.env;
+    format = "dotenv";
+  };
+
+  services.mautrix-telegram = {
+    enable = true;
+
+    environmentFile = config.sops.secrets."mautrix-telegram.env".path;
+
+    settings = {
+      homeserver = {
+        address = "http://localhost:8008";
+        domain = domain;
+      };
+      appservice = {
+        provisioning.enabled = false;
+        id = "telegram";
+        public = {
+          enabled = true;
+          prefix = "/public";
+          external = "http://${domain}:8080/public";
+        };
+        database = "postgresql://mautrix-telegram:telegram@localhost/mautrix-telegram";
+      };
+      bridge = {
+        relaybot.authless_portals = false;
+        permissions = {
+          "@l:${domain}" = "admin";
+        };
+
+        animated_sticker = {
+          target = "gif";
+          args = {
+            width = 256;
+            height = 256;
+            fps = 30;
+            background = "020202";
+          };
+        };
+      };
+    };
+  };
+
+  systemd.services.mautrix-telegram.path = with pkgs; [
+    lottieconverter # for animated stickers conversion, unfree package
+    ffmpeg # if converting animated stickers to webm (very slow!)
+  ];
 }
