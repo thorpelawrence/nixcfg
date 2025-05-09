@@ -12,6 +12,9 @@ in
       "pcopy.${domain}".extraConfig = ''
         reverse_proxy http://100.71.198.32:2586
       '';
+      "gotify.${domain}".extraConfig = ''
+        reverse_proxy http://100.71.198.32:7152
+      '';
     };
   };
 }
