@@ -38,12 +38,12 @@
   sops.secrets."passwords/lawrence".neededForUsers = true;
   sops.secrets."nixos-upgrade-webhook" = { };
   sops.secrets."tailscale-auth-key" = { };
-  sops.secrets."gluetun-mullvad.env" = {
-    sopsFile = ../../secrets/gluetun-mullvad.env;
+  sops.secrets."gluetun-protonvpn.env" = {
+    sopsFile = ../../secrets/gluetun-protonvpn.env;
     format = "dotenv";
   };
-  sops.secrets."tailscale-gluetun-mullvad.env" = {
-    sopsFile = ../../secrets/tailscale-gluetun-mullvad.env;
+  sops.secrets."tailscale-gluetun.env" = {
+    sopsFile = ../../secrets/tailscale-gluetun.env;
     format = "dotenv";
   };
 
@@ -53,7 +53,7 @@
   networking.hostName = "flaky";
   networking.firewall = {
     enable = true;
-    trustedInterfaces = [ "tailscale0" "podman0" ];
+    trustedInterfaces = [ "tailscale0" ];
     allowedUDPPorts = [ config.services.tailscale.port ];
     allowedTCPPorts = [ 22 ];
   };
@@ -71,7 +71,7 @@
   virtualisation = {
     oci-containers =
       let
-        tailscale_exit_node_mullvad =
+        tailscale_exit_node_protonvpn =
           { type ? "openvpn"
           , countries
           , cities ? [ ]
@@ -79,76 +79,60 @@
           , hostnames ? [ ]
           , shortname ? lib.strings.toLower builtins.head countries
           }: {
-            "gluetun-${shortname}" = {
+            "gluetun-protonvpn-${shortname}" = {
               image = "qmcgaw/gluetun:latest";
               environment = {
-                VPN_SERVICE_PROVIDER = "mullvad";
+                VPN_SERVICE_PROVIDER = "protonvpn";
                 VPN_TYPE = type;
-                OPENVPN_IPV6 = "on";
                 SERVER_COUNTRIES = lib.strings.concatStringsSep "," countries;
                 SERVER_CITIES = lib.strings.concatStringsSep "," cities;
                 SERVER_HOSTNAMES = lib.strings.concatStringsSep "," hostnames;
                 ISP = lib.strings.concatStringsSep "," isps;
-                DOT_PROVIDERS = "quad9";
-                DOT_IPV6 = "on";
-                BLOCK_ADS = "off";
-                BLOCK_MALICIOUS = "off";
-                BLOCK_SURVEILLANCE = "off";
                 UPDATER_PERIOD = "24h";
               };
-              environmentFiles = [ config.sops.secrets."gluetun-mullvad.env".path ];
+              environmentFiles = [ config.sops.secrets."gluetun-protonvpn.env".path ];
               extraOptions = [
                 "--cap-add=NET_ADMIN"
                 "--device=/dev/net/tun"
               ];
             };
-            "tailscale-gluetun-mullvad-${shortname}" = {
-              dependsOn = [ "gluetun-${shortname}" ];
+            "tailscale-gluetun-protonvpn-${shortname}" = {
+              dependsOn = [ "gluetun-protonvpn-${shortname}" ];
               image = "tailscale/tailscale:latest";
-              hostname = "gluetun-mullvad-${shortname}";
               environment = {
-                TS_AUTH_ONCE = "true";
+                TS_HOSTNAME = "gluetun-protonvpn-${shortname}";
+                # TS_AUTH_ONCE = "true";
                 TS_STATE_DIR = "/var/lib/tailscale";
-                TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun-mullvad";
+                TS_EXTRA_ARGS = "--advertise-exit-node --advertise-tags=tag:gluetun";
                 TS_NO_LOGS_NO_SUPPORT = "true";
               };
-              environmentFiles = [ config.sops.secrets."tailscale-gluetun-mullvad.env".path ];
+              environmentFiles = [ config.sops.secrets."tailscale-gluetun.env".path ];
               volumes = [
-                "/dev/net/tun:/dev/net/tun"
-                "tailscale-gluetun-mullvad-${shortname}:/var/lib/tailscale"
+                # "/dev/net/tun:/dev/net/tun"
+                "tailscale-gluetun-protonvpn-${shortname}:/var/lib/tailscale"
               ];
               extraOptions = [
-                "--network=container:gluetun-${shortname}"
+                "--network=container:gluetun-protonvpn-${shortname}"
                 "--cap-add=NET_ADMIN"
-                "--cap-add=NET_RAW"
+                "--cap-add=SYS_MODULE"
               ];
             };
           };
       in
       {
+        backend = "docker";
         containers = { }
-          // tailscale_exit_node_mullvad {
-          countries = [ "UK" ];
-          cities = [ "London" ];
-          isps = [ "xtom" ];
+          // tailscale_exit_node_protonvpn {
+          countries = [ "Finland" ];
+          type = "wireguard";
+          shortname = "fin";
+        }
+          // tailscale_exit_node_protonvpn {
+          countries = [ "United Kingdom" ];
           type = "wireguard";
           shortname = "lon";
         };
-        # // tailscale_exit_node_mullvad {
-        #   countries = [ "Finland" ];
-        #   shortname = "fin";
-        # }
-        # // tailscale_exit_node_mullvad {
-        #   countries = [ "Norway" ];
-        #   type = "wireguard";
-        #   shortname = "nor";
-        # };
       };
-    podman = {
-      enable = true;
-      autoPrune.enable = true;
-      defaultNetwork.settings.dns_enabled = true;
-    };
   };
   environment.systemPackages = [ ];
   programs.fish.enable = true;
@@ -156,7 +140,7 @@
   users.users.lawrence = {
     isNormalUser = true;
     hashedPasswordFile = config.sops.secrets."passwords/lawrence".path;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCtxdBlDGBWLeUUWberZaklLhWJ0tSXzRPhVJi12Y2DQ0ojdz3gULkOuBeYF3O1reaw3CM9tN8LBzP73JOeuONyUYkA0FjsbYRcZ/dJxFNEMfgpKNNWBLBgy9hkl0eAIWipIlf0Ld1TOH4332JjH19otGuclZO1erIrTD9YJIZA5LhPYzOG8aS5EzPhILZxy+uWmAaeeOoxMEBbj/l8oTnU6e1Sr3CVtoFL2g2WiwxdATvAM3O0B3BsZ3IQuVAaqB+Ij8jDqHKwNzDOULuSCRltDGRQtiJavT/f4SGjyMLanGTtVGGWUpZL66ZmXHz3ayPnYF6qQebXp7PyZau9htrgK1ouL6z7SCQWRy25fFiFTox2m+spb7OLSfwNBN6XKRQ/SXbV5O3VLJNl91EDvMUS82ubYq7fKuuC162hIJlMqOa+K8vnYxHR5pDB81FAIT5LNlqP7RQ12W1xT+fN9QL/tj6uTsB8YqYOmToT7zQH6CgaNYq1JL3zOpB/HY1H55taCZLfYwZ0AxNA/4FjYKnyoYrGAUAvNbEfQW+8361ciT2ZVwap1fokhspoNXsNPW78Nimrshx4kK/4NIDBmR2b9/kjz6Oc0cAdylD9mo99U9unh/lIeieFmJc6Dz42pI5Zygs4m2lIfmTBRmEdVesbNzic7nqhVLvLI7GtsVFgJQ== openpgp:0xAB82976A"

@@ -44,7 +44,7 @@ in
       '';
       "element.${fqdn}" = {
         extraConfig = ''
-          encode gzip
+          encode zstd gzip
           file_server
           root * ${pkgs.element-web.override {
             conf = {
