@@ -15,6 +15,9 @@ in
       "gotify.${domain}".extraConfig = ''
         reverse_proxy http://100.71.198.32:7152
       '';
+      "freshrss.${domain}".extraConfig = ''
+        reverse_proxy http://100.71.198.32:18191
+      '';
     };
   };
 }
