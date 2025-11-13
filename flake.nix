@@ -50,6 +50,6 @@
         };
       };
 
-      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deployPkgs.deploy-rs.lib;
+      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     };
 }
