@@ -6,6 +6,9 @@ in
   services.caddy = {
     enable = true;
     virtualHosts = {
+      "ok.${domain}".extraConfig = ''
+        reverse_proxy http://100.71.198.32:11212
+      '';
       "plik.${domain}".extraConfig = ''
         reverse_proxy http://100.71.198.32:1612
       '';
