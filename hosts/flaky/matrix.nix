@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 let
   hostName = "matrix";
   domain = "letc.me";
@@ -17,7 +22,10 @@ in
     "olm-3.2.16"
   ];
 
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [
+    80
+    443
+  ];
 
   services.postgresql.enable = true;
   services.postgresql.initialScript = pkgs.writeText "synapse-init.sql" ''
@@ -46,11 +54,13 @@ in
         extraConfig = ''
           encode zstd gzip
           file_server
-          root * ${pkgs.element-web.override {
-            conf = {
-              default_server_config = clientConfig;
-            };
-          }}
+          root * ${
+            pkgs.element-web.override {
+              conf = {
+                default_server_config = clientConfig;
+              };
+            }
+          }
         '';
         serverAliases = [ "element.${domain}" ];
       };
@@ -80,10 +90,15 @@ in
         type = "http";
         tls = false;
         x_forwarded = true;
-        resources = [{
-          names = [ "client" "federation" ];
-          compress = true;
-        }];
+        resources = [
+          {
+            names = [
+              "client"
+              "federation"
+            ];
+            compress = true;
+          }
+        ];
       }
     ];
     extraConfigFiles = [

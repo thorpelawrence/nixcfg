@@ -13,13 +13,15 @@
     oci-containers =
       let
         tailscale_exit_node_protonvpn =
-          { type ? "openvpn"
-          , countries
-          , cities ? [ ]
-          , isps ? [ ]
-          , hostnames ? [ ]
-          , shortname ? lib.strings.toLower builtins.head countries
-          }: {
+          {
+            type ? "openvpn",
+            countries,
+            cities ? [ ],
+            isps ? [ ],
+            hostnames ? [ ],
+            shortname ? lib.strings.toLower builtins.head countries,
+          }:
+          {
             "gluetun-protonvpn-${shortname}" = {
               image = "qmcgaw/gluetun:latest";
               environment = {
@@ -61,17 +63,18 @@
           };
       in
       {
-        containers = { }
+        containers =
+          { }
           // tailscale_exit_node_protonvpn {
-          countries = [ "Finland" ];
-          type = "wireguard";
-          shortname = "fin";
-        }
+            countries = [ "Finland" ];
+            type = "wireguard";
+            shortname = "fin";
+          }
           // tailscale_exit_node_protonvpn {
-          countries = [ "United Kingdom" ];
-          type = "wireguard";
-          shortname = "lon";
-        };
+            countries = [ "United Kingdom" ];
+            type = "wireguard";
+            shortname = "lon";
+          };
       };
   };
 }
