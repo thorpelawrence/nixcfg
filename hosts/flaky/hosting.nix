@@ -28,7 +28,7 @@ in
             respond <<HTML
               <html>
                 <head>
-                  <meta name="go-import" content="https://{host}/{vars.repo_name} git {vars.upstream}/{vars.repo_name}">
+                  <meta name="go-import" content="{host}/{vars.repo_name} git {vars.upstream}/{vars.repo_name}">
                 </head>
               </html>
               HTML
